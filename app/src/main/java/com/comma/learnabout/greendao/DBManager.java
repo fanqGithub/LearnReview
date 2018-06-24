@@ -16,7 +16,7 @@ public class DBManager {
     private ThreadInfoDao threadInfoDao;
     private DownLoadInfoDao downLoadInfoDao;
 
-    public static DBManager get() {
+    public synchronized static DBManager get() {
         return SingletonHolder.instance;
     }
 
@@ -24,7 +24,7 @@ public class DBManager {
         private static DBManager instance = new DBManager();
     }
 
-    public void init(Context context) {
+    public void  init(Context context) {
         DaoMaster.DevOpenHelper helper = new DaoMaster.DevOpenHelper(context, DB_NAME);
         Database db = helper.getWritableDb();
         DaoSession daoSession = new DaoMaster(db).newSession();
