@@ -21,6 +21,7 @@ import android.widget.Spinner;
 import com.comma.learnabout.entity.FileInfo;
 import com.comma.learnabout.entity.ThreadInfo;
 import com.comma.learnabout.mutidown.DownLoadAdapter;
+import com.comma.learnabout.mutidown.DownLoadThread;
 import com.comma.learnabout.mutidown.MultiDownLoadManger;
 import com.comma.learnabout.service.DownLoadService;
 
@@ -41,17 +42,22 @@ public class MutilDownloadActivity extends AppCompatActivity {
     private DownLoadAdapter mAdapter=null;
     private List<ThreadInfo> mLits=new ArrayList<>();
     private MultiDownLoadManger multiDownLoadManger;
+    private List<DownLoadThread> downLoadThreads=new ArrayList<>();
 
-    final FileInfo info=new FileInfo(1,"","http://gyxz.hwm6b6.cn/hk/rj_hq1/koudaiyoushu.apk",0,0,false);
+    final FileInfo info=new FileInfo(1,"","http://gyxz.hwm6b6.cn/yq/yx_lm1/gat5sjb.apk",0,0,false);
 
     private BroadcastReceiver mReceiver=new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if(MultiDownLoadManger.BROCAST_UPDATE_PROGRESS.equals(intent.getAction())){
                 int finisedsize=intent.getIntExtra("finisedsize",0);
-                int threadid=intent.getIntExtra("threadid",0);
+                long threadid=intent.getLongExtra("threadid",0);
                 if (mLits!=null && mLits.size()>0) {
-                    mAdapter.notifyThreadProgress(threadid, finisedsize);
+                    ThreadInfo info = mLits.get((int)threadid);
+                    info.setFinisedSize(finisedsize);
+                    Log.d("更新后的info","thread="+info.toString());
+                    mLits.set((int) threadid,info);
+                    mAdapter.notifyDataSetChanged();
                 }
             }
         }
@@ -78,27 +84,52 @@ public class MutilDownloadActivity extends AppCompatActivity {
         mAdapter=new DownLoadAdapter(this,mLits);
         mRecyclerView.setAdapter(mAdapter);
 
-        multiDownLoadManger=new MultiDownLoadManger(this,info,downThreadCount);
+        //添加事件Spinner事件监听
+        mSpinner.setOnItemSelectedListener(new SpinnerSelectedListener());
+        startBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startTask();
+            }
+        });
+        IntentFilter filter=new IntentFilter();
+        filter.addAction(MultiDownLoadManger.BROCAST_UPDATE_PROGRESS);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver,filter);
 
+        mAdapter.setButtonClickListener(new DownLoadAdapter.OnButtonClickListener() {
+
+            @Override
+            public void startDownLoad(int position) {
+                DownLoadThread downLoadThread=downLoadThreads.get(position);
+                downLoadThread.mPause=false;
+            }
+
+            @Override
+            public void stopDownLoad(int position) {
+                DownLoadThread downLoadThread=downLoadThreads.get(position);
+                downLoadThread.mPause=true;
+            }
+        });
+
+
+    }
+
+    private void startTask() {
+        multiDownLoadManger=new MultiDownLoadManger(MutilDownloadActivity.this,info,downThreadCount);
         multiDownLoadManger.setAddListener(new MultiDownLoadManger.ThreadAddListener() {
             @Override
             public void addThreadDone(List<ThreadInfo> infos) {
                 mLits.addAll(infos);
                 mAdapter.notifyDataSetChanged();
             }
-        });
 
-        //添加事件Spinner事件监听
-        mSpinner.setOnItemSelectedListener(new SpinnerSelectedListener());
-        startBtn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                multiDownLoadManger.downLoad();
+            public void callBackAllDownThreads(List<DownLoadThread> threads) {
+                downLoadThreads.addAll(threads);
             }
+
         });
-        IntentFilter filter=new IntentFilter();
-        filter.addAction(MultiDownLoadManger.BROCAST_UPDATE_PROGRESS);
-        LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver,filter);
+        multiDownLoadManger.downLoad();
     }
 
     private class SpinnerSelectedListener implements android.widget.AdapterView.OnItemSelectedListener {

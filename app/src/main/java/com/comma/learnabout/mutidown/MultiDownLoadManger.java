@@ -47,6 +47,7 @@ public class MultiDownLoadManger{
     private ThreadAddListener mListener=null;
 
     private List<ThreadInfo> infos=new ArrayList<>();
+    private List<DownLoadThread> downLoadThreads=new ArrayList<>();
 
     public MultiDownLoadManger(Context context,FileInfo fileInfo,int count){
         this.mInfo=fileInfo;
@@ -61,6 +62,7 @@ public class MultiDownLoadManger{
                 case MSG_INIT_DONE:
                     if (mListener!=null){
                         mListener.addThreadDone(infos);
+                        mListener.callBackAllDownThreads(downLoadThreads);
                     }
                     break;
                 default:
@@ -114,7 +116,8 @@ public class MultiDownLoadManger{
                 mInfo.setLength(length);
                 Log.d("down","获取到的文件长度:"+mInfo.getLength());
                 //
-                int blockSize = length/threadCount;
+                int blockSize = length%threadCount==0?length/threadCount:length/threadCount+1;
+
                 for(int threadId = 0; threadId < threadCount; threadId++){
                     int startIndex = threadId * blockSize;
                     int endIndex = (threadId+1) * blockSize -1;
@@ -127,7 +130,9 @@ public class MultiDownLoadManger{
                         newThreadInfo=new ThreadInfo(threadId,mInfo.getFileUrl(),startIndex,endIndex,0);
                     }
                     infos.add(newThreadInfo);
-                    new DownLoadThread(newThreadInfo,mInfo,mContext).start();
+                    DownLoadThread downLoadThread=new DownLoadThread(newThreadInfo,mInfo,mContext);
+                    downLoadThread.start();
+                    downLoadThreads.add(downLoadThread);
                 }
                 mHandler.sendEmptyMessage(1);
             } catch (IOException e) {
@@ -145,6 +150,7 @@ public class MultiDownLoadManger{
 
     public interface ThreadAddListener{
         void addThreadDone(List<ThreadInfo> infos);
+        void callBackAllDownThreads(List<DownLoadThread> threads);
     }
 
     public void setAddListener(ThreadAddListener listener){

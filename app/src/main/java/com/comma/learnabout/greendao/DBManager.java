@@ -40,7 +40,7 @@ public class DBManager {
         return fileInfoDao;
     }
 
-    public ThreadInfoDao getThreadInfoDao(){
+    public synchronized ThreadInfoDao getThreadInfoDao(){
         return threadInfoDao;
     }
 

@@ -26,6 +26,7 @@ public class DownLoadAdapter extends RecyclerView.Adapter<DownLoadAdapter.MultiD
 
     private Context mContext=null;
     private List<ThreadInfo> list=null;
+    private OnButtonClickListener mListener=null;
 
     public DownLoadAdapter(Context context, List<ThreadInfo> infos){
         this.mContext=context;
@@ -41,13 +42,36 @@ public class DownLoadAdapter extends RecyclerView.Adapter<DownLoadAdapter.MultiD
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MultiDownViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull MultiDownViewHolder holder, final int position) {
         ThreadInfo info=list.get(position);
         int currentAll=info.getEnd()-(info.getStart()-1);
         float percent=(float)info.getFinisedSize()/currentAll*100;
-        holder.partName.setText("线程："+info.getId());
+        holder.partName.setText("线程编号："+info.getId()+"；下载区间：["+info.getStart()+"-"+info.getEnd()+"]");
         holder.progressBar.setMax(100);
         holder.progressBar.setProgress((int) percent);
+        if (percent==100){
+            holder.doneText.setVisibility(View.VISIBLE);
+        }else {
+            holder.doneText.setVisibility(View.GONE);
+        }
+
+        holder.startBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mListener!=null){
+                    mListener.startDownLoad(position);
+                }
+            }
+        });
+
+        holder.stopBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mListener!=null){
+                    mListener.stopDownLoad(position);
+                }
+            }
+        });
     }
 
     @Override
@@ -59,7 +83,7 @@ public class DownLoadAdapter extends RecyclerView.Adapter<DownLoadAdapter.MultiD
     }
 
     class MultiDownViewHolder extends RecyclerView.ViewHolder{
-        TextView partName;
+        TextView partName,doneText;
         ProgressBar progressBar;
         Button startBtn;
         Button stopBtn;
@@ -67,20 +91,20 @@ public class DownLoadAdapter extends RecyclerView.Adapter<DownLoadAdapter.MultiD
         public MultiDownViewHolder(View itemView) {
             super(itemView);
             partName=itemView.findViewById(R.id.partname);
+            doneText=itemView.findViewById(R.id.done);
             progressBar=itemView.findViewById(R.id.progress);
             startBtn=itemView.findViewById(R.id.start_btn);
             stopBtn=itemView.findViewById(R.id.stop_btn);
         }
     }
 
-    public void notifyThreadProgress(int id,int finishedsize){
-        if (list!=null && list.size()>0) {
-            ThreadInfo info = list.get(id);
-            info.setFinisedSize(finishedsize);
-            list.set(id,info);
-            notifyDataSetChanged();
-        }
+    public interface OnButtonClickListener{
+        void startDownLoad(int position);
+        void stopDownLoad(int position);
     }
 
+    public void setButtonClickListener(OnButtonClickListener listener){
+        this.mListener=listener;
+    }
 
 }

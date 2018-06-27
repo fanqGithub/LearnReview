@@ -81,5 +81,14 @@ public class ThreadInfo {
         this.finisedSize = finisedSize;
     }
 
-
+    @Override
+    public String toString() {
+        return "ThreadInfo{" +
+                "id=" + id +
+                ", url='" + url + '\'' +
+                ", start=" + start +
+                ", end=" + end +
+                ", finisedSize=" + finisedSize +
+                '}';
+    }
 }

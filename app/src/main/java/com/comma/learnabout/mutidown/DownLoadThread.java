@@ -41,6 +41,7 @@ public class DownLoadThread extends Thread{
 
     @Override
     public void run() {
+        Log.d("down","线程"+newThreadInfo.getId()+"开启");
         ThreadInfo exiInfo=threadInfoDao.queryBuilder().where(ThreadInfoDao.Properties.Id.eq(newThreadInfo.getId())).unique();
         if (exiInfo==null){
             threadInfoDao.insert(newThreadInfo);
@@ -70,7 +71,7 @@ public class DownLoadThread extends Thread{
                 while ((len=is.read(buffer))!=-1){
                     raf.write(buffer,0,len);
                     mFinishedSize+=len;
-                    if (System.currentTimeMillis()-time>1000) {
+                    if (System.currentTimeMillis()-time>1500) {
                         Log.d("down","线程"+newThreadInfo.getId()+";"+"已经下载进度:"+(float)mFinishedSize/currentAll*100);
                         intent.putExtra("threadid",newThreadInfo.getId());
                         intent.putExtra("finisedsize",mFinishedSize);
@@ -78,17 +79,16 @@ public class DownLoadThread extends Thread{
                     }
                     //暂停--》更新
                     if (mPause){
-                        Log.d("down","暂停下载");
+                        Log.d("down","线程["+newThreadInfo.getId()+"]暂停下载");
                         newThreadInfo.setFinisedSize(mFinishedSize);
                         threadInfoDao.update(newThreadInfo);
                         return;
                     }
                 }
                 //下完，删除保存的信息
-                Log.d("down","已完成");
+                Log.d("down","线程"+newThreadInfo.getId()+"已完成");
                 threadInfoDao.delete(newThreadInfo);
             }
-
 
         } catch (IOException e) {
             e.printStackTrace();
