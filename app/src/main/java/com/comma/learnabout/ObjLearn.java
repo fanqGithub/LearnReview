@@ -44,6 +44,10 @@ import java.util.Random;
  请看以下利用wait，notify实现的一个生产者、一个消费者和一个单位的缓存的简单模型：
 
 
+ ========================================================
+ 在这里复习一下Queue队列的使用：Queue使用时要尽量避免Collection的add()和remove()方法，而是要使用offer()来加入元素，使用poll()来获取并移出元素。
+ 它们的优点是通过返回值可以判断成功与否，add()和remove()方法在失败的时候会抛出异常。
+ 如果要使用前端而不移出该元素，使用element()或者peek()方法。
 
  */
 
@@ -121,7 +125,7 @@ public class ObjLearn {
                             ex.printStackTrace();
                         }
                     }
-                    System.out.println("Consuming value : " + queue.remove());
+                    System.out.println("Consuming value : " + queue.poll());
                     queue.notifyAll();
                 }
             }
